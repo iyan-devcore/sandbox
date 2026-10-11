@@ -5,8 +5,17 @@ import { CoinsIcon, MessageSquareIcon, SquarePenIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { Suspense, use, useState } from "react"
+import { cn } from "cn"
 
 import { Empty, EmptyDescription } from "@/components/ui/empty"
+import {
+  Popover,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import {
   Sidebar,
   SidebarContent,
@@ -20,13 +29,15 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
-  useSidebar,
 } from "@/components/ui/sidebar"
+import { Skeleton } from "@/components/ui/skeleton"
+import type { Game } from "@/lib/games/queries"
 
-export function AppSidebar() {
-  const pathname = usePathname()
-  const { setOpen } = useSidebar()
-
+export function AppSidebar({
+  gamesPromise,
+}: {
+  gamesPromise: Promise<Game[]>
+}) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="flex-row items-center justify-between">
@@ -49,32 +60,22 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton
-                render={<Link href="/" />}
-                isActive={pathname === "/"}
-              >
-                <SquarePenIcon />
-                <span>New game</span>
-              </SidebarMenuButton>
+              <Suspense fallback={<NewGameButton />}>
+                <ActiveNewGameButton />
+              </Suspense>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
         <SidebarGroup>
           <SidebarGroupLabel>Recents</SidebarGroupLabel>
           <SidebarGroupContent>
-            <Empty className="border p-2 group-data-[collapsible=icon]:hidden">
-              <EmptyDescription className="text-xs">
-                Your games will live here.
-              </EmptyDescription>
-            </Empty>
-            <SidebarMenu className="hidden group-data-[collapsible=icon]:flex">
-              <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => setOpen(true)}>
-                  <MessageSquareIcon />
-                  <span>Recents</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
+            <Suspense fallback={<RecentGamesSkeleton />}>
+              <GameList
+                gamesPromise={gamesPromise}
+                className="group-data-[collapsible=icon]:hidden"
+              />
+            </Suspense>
+            <CollapsedRecentGames gamesPromise={gamesPromise} />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
@@ -106,5 +107,110 @@ export function AppSidebar() {
         </div>
       </SidebarFooter>
     </Sidebar>
+  )
+}
+
+// usePathname suspends on routes with request-time params (e.g. /games/[id]),
+// so it's isolated behind Suspense to keep the rest of the layout prerendered.
+function ActiveNewGameButton() {
+  const pathname = usePathname()
+
+  return <NewGameButton isActive={pathname === "/"} />
+}
+
+function NewGameButton({ isActive = false }: { isActive?: boolean }) {
+  return (
+    <SidebarMenuButton render={<Link href="/" />} isActive={isActive}>
+      <SquarePenIcon />
+      <span>New game</span>
+    </SidebarMenuButton>
+  )
+}
+
+function CollapsedRecentGames({
+  gamesPromise,
+}: {
+  gamesPromise: Promise<Game[]>
+}) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <SidebarMenu className="hidden group-data-[collapsible=icon]:flex">
+      <SidebarMenuItem>
+        <Popover open={open} onOpenChange={setOpen}>
+          <SidebarMenuButton render={<PopoverTrigger />} isActive={open}>
+            <MessageSquareIcon />
+            <span>Recents</span>
+          </SidebarMenuButton>
+          <PopoverContent side="right" align="start" className="w-64 p-2">
+            <PopoverHeader className="px-2 pt-1">
+              <PopoverTitle className="text-xs text-muted-foreground">
+                Recents
+              </PopoverTitle>
+            </PopoverHeader>
+            <Suspense fallback={<RecentGamesSkeleton />}>
+              <GameList
+                gamesPromise={gamesPromise}
+                onNavigate={() => setOpen(false)}
+              />
+            </Suspense>
+          </PopoverContent>
+        </Popover>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  )
+}
+
+function GameList({
+  gamesPromise,
+  onNavigate,
+  className,
+}: {
+  gamesPromise: Promise<Game[]>
+  onNavigate?: () => void
+  className?: string
+}) {
+  const games = use(gamesPromise)
+  const pathname = usePathname()
+
+  if (games.length === 0) {
+    return (
+      <Empty className={cn("border p-2", className)}>
+        <EmptyDescription className="text-xs">
+          Your games will live here.
+        </EmptyDescription>
+      </Empty>
+    )
+  }
+
+  return (
+    <SidebarMenu className={className}>
+      {games.map((game) => {
+        const href = `/games/${game.id}`
+
+        return (
+          <SidebarMenuItem key={game.id}>
+            <SidebarMenuButton
+              render={<Link href={href} onClick={onNavigate} />}
+              isActive={pathname === href}
+            >
+              <span>{game.title}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        )
+      })}
+    </SidebarMenu>
+  )
+}
+
+function RecentGamesSkeleton() {
+  return (
+    <SidebarMenu className="group-data-[collapsible=icon]:hidden">
+      {["80%", "60%", "70%"].map((width, i) => (
+        <SidebarMenuItem key={i} className="flex h-8 items-center px-2">
+          <Skeleton className="h-4" style={{ width }} />
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
   )
 }

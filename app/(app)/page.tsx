@@ -11,6 +11,9 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 
+// Auth check redirects before streaming, so let this route block on the server.
+export const instant = false
+
 export default async function Page() {
   await auth.protect()
 

@@ -1,5 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { listGames } from "@/lib/games/queries"
 
 export default function AppLayout({
   children,
@@ -8,7 +9,7 @@ export default function AppLayout({
 }>) {
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar gamesPromise={listGames()} />
       <SidebarInset>{children}</SidebarInset>
     </SidebarProvider>
   )
