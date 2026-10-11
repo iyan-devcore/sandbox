@@ -1,5 +1,5 @@
-import { UserButton } from "@clerk/nextjs"
-import { auth } from "@clerk/nextjs/server"
+import { OrganizationSwitcher, UserButton } from "@clerk/nextjs"
+import { auth, Organization } from "@clerk/nextjs/server"
 import Image from "next/image"
 
 import {
@@ -28,6 +28,7 @@ export default async function Page() {
         </EmptyHeader>
       </Empty>
       <UserButton />
+      <OrganizationSwitcher />
     </div>
   )
 }
