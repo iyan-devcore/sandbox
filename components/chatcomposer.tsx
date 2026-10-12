@@ -1,20 +1,8 @@
 "use client"
 
-import {
-  ArrowUpIcon,
-  CarIcon,
-  ChevronDownIcon,
-  CrosshairIcon,
-  Gamepad2Icon,
-  GripHorizontalIcon,
-  PickaxeIcon,
-  PlaneIcon,
-  SwordsIcon,
-  ZapIcon,
-} from "lucide-react"
+import { ArrowUpIcon, ChevronDownIcon, GripHorizontalIcon } from "lucide-react"
 import { useActionState } from "react"
 
-import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,76 +24,44 @@ export function ChatComposer() {
   )
 
   return (
-    <div className="flex w-full flex-col gap-6">
-      <form action={formAction}>
-        <InputGroup className="rounded-xl">
-          <InputGroupTextarea
-            name="prompt"
-            required
-            placeholder="Describe the game you want to build..."
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault()
-                e.currentTarget.form?.requestSubmit()
-              }
-            }}
-          />
-          <InputGroupAddon align="block-end">
-            <DropdownMenu>
-              <DropdownMenuTrigger render={<InputGroupButton />}>
-                <GripHorizontalIcon />
-                Kimi K3
-                <ChevronDownIcon />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-auto">
-                <DropdownMenuItem>Kimi K3</DropdownMenuItem>
-                <DropdownMenuItem>Claude Sonnet 5.5</DropdownMenuItem>
-                <DropdownMenuItem>Claude Opus 5.5</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <InputGroupButton
-              type="submit"
-              variant="default"
-              size="icon-sm"
-              aria-label="Send"
-              disabled={pending}
-              className="ml-auto rounded-full"
-            >
-              <ArrowUpIcon />
-            </InputGroupButton>
-          </InputGroupAddon>
-        </InputGroup>
-      </form>
-      <div className="flex flex-wrap justify-center gap-2">
-        <Button variant="outline" className="rounded-full">
-          <PickaxeIcon data-icon="inline-start" />
-          Voxel survival
-        </Button>
-        <Button variant="outline" className="rounded-full">
-          <SwordsIcon data-icon="inline-start" />
-          Ink samurai duel
-        </Button>
-        <Button variant="outline" className="rounded-full">
-          <ZapIcon data-icon="inline-start" />
-          Comic-book firefight
-        </Button>
-        <Button variant="outline" className="rounded-full">
-          <PlaneIcon data-icon="inline-start" />
-          Realistic battlefield
-        </Button>
-        <Button variant="outline" className="rounded-full">
-          <CrosshairIcon data-icon="inline-start" />
-          Fight-first shooter
-        </Button>
-        <Button variant="outline" className="rounded-full">
-          <CarIcon data-icon="inline-start" />
-          Jungle expedition drive
-        </Button>
-        <Button variant="outline" className="rounded-full">
-          <Gamepad2Icon data-icon="inline-start" />
-          Sunny kingdom platformer
-        </Button>
-      </div>
-    </div>
+    <form action={formAction} className="w-full">
+      <InputGroup className="rounded-xl">
+        <InputGroupTextarea
+          name="prompt"
+          required
+          placeholder="Describe the game you want to build..."
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault()
+              e.currentTarget.form?.requestSubmit()
+            }
+          }}
+        />
+        <InputGroupAddon align="block-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<InputGroupButton />}>
+              <GripHorizontalIcon />
+              Kimi K3
+              <ChevronDownIcon />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-auto">
+              <DropdownMenuItem>Kimi K3</DropdownMenuItem>
+              <DropdownMenuItem>Claude Sonnet 5.5</DropdownMenuItem>
+              <DropdownMenuItem>Claude Opus 5.5</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <InputGroupButton
+            type="submit"
+            variant="default"
+            size="icon-sm"
+            aria-label="Send"
+            disabled={pending}
+            className="ml-auto rounded-full"
+          >
+            <ArrowUpIcon />
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
+    </form>
   )
 }

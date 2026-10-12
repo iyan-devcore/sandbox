@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server"
 import Image from "next/image"
 
 import { ChatComposer } from "@/components/chatcomposer"
+import { Button } from "@/components/ui/button"
 import {
   Empty,
   EmptyContent,
@@ -10,6 +11,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
+import { suggestions } from "@/lib/games/suggestions"
 
 // Auth check redirects before streaming, so let this route block on the server.
 export const instant = false
@@ -30,8 +32,16 @@ export default async function Page() {
             own words. If you can describe it, you can play it.
           </EmptyDescription>
         </EmptyHeader>
-        <EmptyContent className="max-w-2xl">
+        <EmptyContent className="max-w-2xl gap-6">
           <ChatComposer />
+          <div className="flex flex-wrap justify-center gap-2">
+            {suggestions.map(({ label, icon: Icon }) => (
+              <Button key={label} variant="outline" className="rounded-full">
+                <Icon data-icon="inline-start" />
+                {label}
+              </Button>
+            ))}
+          </div>
         </EmptyContent>
       </Empty>
     </div>
