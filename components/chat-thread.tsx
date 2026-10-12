@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport, type UIMessage } from "ai"
 import Image from "next/image"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { ChatComposer } from "@/components/chat-composer"
 import { Bubble, BubbleContent } from "@/components/ui/bubble"
@@ -25,16 +25,29 @@ export function ChatThread({
   initialMessages: UIMessage[]
 }) {
   const [input, setInput] = useState("")
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, regenerate, status } = useChat({
     id: gameId,
     messages: initialMessages,
     transport: new DefaultChatTransport({
       // The server loads the saved thread, so only send the new message.
-      prepareSendMessagesRequest({ messages, id }) {
-        return { body: { id, message: messages.at(-1) } }
+      // A regenerate sends none, so the server replies to the saved thread.
+      prepareSendMessagesRequest({ messages, id, trigger }) {
+        return trigger === "submit-message"
+          ? { body: { id, message: messages.at(-1) } }
+          : { body: { id } }
       },
     }),
   })
+
+  // createGame saves the prompt as the first message, so a thread ending in a
+  // user message still needs its reply. The ref stops Strict Mode's second
+  // effect run from requesting it twice.
+  const requestedReply = useRef(false)
+  useEffect(() => {
+    if (requestedReply.current) return
+    requestedReply.current = true
+    if (initialMessages.at(-1)?.role === "user") regenerate()
+  }, [initialMessages, regenerate])
 
   return (
     <div className="flex h-svh flex-col">

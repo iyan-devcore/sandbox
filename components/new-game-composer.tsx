@@ -14,12 +14,8 @@ export function NewGameComposer() {
       value={value}
       onValueChange={setValue}
       pending={pending}
-      onSubmit={(prompt) =>
-        startTransition(async () => {
-          await createGame(prompt)
-          setValue("")
-        })
-      }
+      // createGame redirects to the new game, so there's nothing to reset here.
+      onSubmit={(prompt) => startTransition(() => createGame(prompt))}
     />
   )
 }

@@ -1,4 +1,3 @@
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible"
 import { auth } from "@clerk/nextjs/server"
 import {
   convertToModelMessages,
@@ -9,12 +8,8 @@ import {
   validateUIMessages,
 } from "ai"
 
+import { model } from "@/lib/ai"
 import { getGameMessages, saveGameMessages } from "@/lib/games/queries"
-
-const ollama = createOpenAICompatible({
-  name: "ollama",
-  baseURL: "http://localhost:11434/v1",
-})
 
 export async function POST(req: Request) {
   const { isAuthenticated, orgId } = await auth()
@@ -23,19 +18,24 @@ export async function POST(req: Request) {
   }
 
   // The client sends only the new message; the thread lives on the game.
-  const { id, message }: { id: string; message: unknown } = await req.json()
+  // Without one, it's asking for a reply to the saved thread, e.g. the first
+  // prompt that createGame saved.
+  const { id, message }: { id: string; message?: unknown } = await req.json()
 
   const previousMessages = await getGameMessages(id)
   if (!previousMessages) {
     return new Response("Not found", { status: 404 })
   }
+  if (!message && previousMessages.at(-1)?.role !== "user") {
+    return new Response("Nothing to reply to", { status: 400 })
+  }
 
   const messages = await validateUIMessages({
-    messages: [...previousMessages, message],
+    messages: message ? [...previousMessages, message] : previousMessages,
   })
 
   const result = streamText({
-    model: ollama("qwen3:8b"),
+    model,
     messages: await convertToModelMessages(messages),
   })
 
