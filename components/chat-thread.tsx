@@ -1,15 +1,13 @@
 "use client"
 
+import { useChat } from "@ai-sdk/react"
+import { DefaultChatTransport, type UIMessage } from "ai"
 import Image from "next/image"
 import { useState } from "react"
 
 import { ChatComposer } from "@/components/chat-composer"
 import { Bubble, BubbleContent } from "@/components/ui/bubble"
-import {
-  Message,
-  MessageAvatar,
-  MessageContent,
-} from "@/components/ui/message"
+import { Message, MessageAvatar, MessageContent } from "@/components/ui/message"
 import {
   MessageScroller,
   MessageScrollerButton,
@@ -19,68 +17,24 @@ import {
   MessageScrollerViewport,
 } from "@/components/ui/message-scroller"
 
-type MockMessage = {
-  id: string
-  role: "user" | "assistant"
-  content: string
-}
-
-// Placeholder conversation until real messages are wired up.
-const messages: MockMessage[] = [
-  {
-    id: "1",
-    role: "user",
-    content: "Make me a voxel survival game set on a floating island.",
-  },
-  {
-    id: "2",
-    role: "assistant",
-    content:
-      "On it! I'll start with a small floating island made of grass, dirt and stone blocks, a first-person camera, and a day/night cycle. You'll be able to break and place blocks with the mouse.",
-  },
-  {
-    id: "3",
-    role: "user",
-    content: "Nice. Can trees drop wood when I break them?",
-  },
-  {
-    id: "4",
-    role: "assistant",
-    content:
-      "Done. Trees are now scattered across the island, and breaking a log adds wood to your inventory. Press E to open the inventory and see what you've collected.",
-  },
-  {
-    id: "5",
-    role: "user",
-    content: "Add some enemies that only come out at night.",
-  },
-  {
-    id: "6",
-    role: "assistant",
-    content:
-      "Added slimes that spawn on the island after sunset and hop toward you. They deal a bit of damage on contact, and a health bar now sits at the bottom of the screen. They despawn at sunrise.",
-  },
-  {
-    id: "7",
-    role: "user",
-    content: "Let me craft a wooden sword to fight them.",
-  },
-  {
-    id: "8",
-    role: "assistant",
-    content:
-      "You can now craft a wooden sword from 2 wood and 1 stick in the inventory. With it equipped, a left click swings at enemies, and slimes take three hits to defeat.",
-  },
-]
-
-export function ChatThread() {
+export function ChatThread({
+  gameId,
+  initialMessages,
+}: {
+  gameId: string
+  initialMessages: UIMessage[]
+}) {
   const [input, setInput] = useState("")
-
-  // Temporary until the thread is wired up to /api/chat.
-  function sendMessage(value: string) {
-    console.log(value)
-    setInput("")
-  }
+  const { messages, sendMessage, status } = useChat({
+    id: gameId,
+    messages: initialMessages,
+    transport: new DefaultChatTransport({
+      // The server loads the saved thread, so only send the new message.
+      prepareSendMessagesRequest({ messages, id }) {
+        return { body: { id, message: messages.at(-1) } }
+      },
+    }),
+  })
 
   return (
     <div className="flex h-svh flex-col">
@@ -95,7 +49,7 @@ export function ChatThread() {
                   <MessageScrollerItem key={message.id} messageId={message.id}>
                     <Message align={isUser ? "end" : "start"}>
                       {!isUser && (
-                        <MessageAvatar className="size-8 bg-transparent self-start rounded-lg">
+                        <MessageAvatar className="size-8 self-start rounded-lg bg-transparent">
                           <Image
                             src="/logo.svg"
                             alt="Assistant"
@@ -109,7 +63,15 @@ export function ChatThread() {
                           variant={isUser ? "secondary" : "ghost"}
                           align={isUser ? "end" : "start"}
                         >
-                          <BubbleContent>{message.content}</BubbleContent>
+                          <BubbleContent>
+                            {message.parts.map((part, i) =>
+                              part.type === "text" ? (
+                                <span key={i} className="whitespace-pre-wrap">
+                                  {part.text}
+                                </span>
+                              ) : null
+                            )}
+                          </BubbleContent>
                         </Bubble>
                       </MessageContent>
                     </Message>
@@ -125,7 +87,12 @@ export function ChatThread() {
         <ChatComposer
           value={input}
           onValueChange={setInput}
-          onSubmit={sendMessage}
+          pending={status === "submitted" || status === "streaming"}
+          placeholder="Describe a change to your game..."
+          onSubmit={(text) => {
+            sendMessage({ text })
+            setInput("")
+          }}
         />
       </div>
     </div>
