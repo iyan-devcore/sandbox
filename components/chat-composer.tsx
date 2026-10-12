@@ -1,7 +1,6 @@
 "use client"
 
 import { ArrowUpIcon, ChevronDownIcon, GripHorizontalIcon } from "lucide-react"
-import { useActionState } from "react"
 
 import {
   DropdownMenu,
@@ -15,21 +14,38 @@ import {
   InputGroupButton,
   InputGroupTextarea,
 } from "@/components/ui/input-group"
-import { createGame } from "@/lib/games/actions"
 
-export function ChatComposer() {
-  const [, formAction, pending] = useActionState(
-    (_: unknown, formData: FormData) => createGame(formData),
-    null
-  )
+type ChatComposerProps = {
+  value: string
+  onValueChange: (value: string) => void
+  onSubmit: (value: string) => void
+  pending?: boolean
+  placeholder?: string
+}
 
+export function ChatComposer({
+  value,
+  onValueChange,
+  onSubmit,
+  pending = false,
+  placeholder = "Describe the game you want to build...",
+}: ChatComposerProps) {
   return (
-    <form action={formAction} className="w-full">
+    <form
+      className="w-full"
+      onSubmit={(e) => {
+        e.preventDefault()
+        const trimmed = value.trim()
+        if (trimmed && !pending) onSubmit(trimmed)
+      }}
+    >
       <InputGroup className="rounded-xl">
         <InputGroupTextarea
           name="prompt"
           required
-          placeholder="Describe the game you want to build..."
+          value={value}
+          onChange={(e) => onValueChange(e.target.value)}
+          placeholder={placeholder}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault()

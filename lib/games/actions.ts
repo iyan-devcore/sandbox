@@ -9,13 +9,13 @@ import { gamesTag } from "@/lib/games/queries"
 
 const MAX_TITLE_LENGTH = 100
 
-export async function createGame(formData: FormData) {
+export async function createGame(input: string) {
   const { orgId } = await auth.protect()
   if (!orgId) {
     throw new Error("Select an organization before creating a game")
   }
 
-  const prompt = String(formData.get("prompt") ?? "").trim()
+  const prompt = input.trim()
   if (!prompt) {
     throw new Error("Describe the game you want to build")
   }
